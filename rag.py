@@ -1,6 +1,7 @@
 import sys                      
 import pathlib                  
 import chromadb                 
+import re
 from pypdf import PdfReader     
 from anthropic import Anthropic 
 
@@ -9,9 +10,9 @@ client = chromadb.PersistentClient(path="db")
 collection = client.get_or_create_collection("docs")
 
 
-def chunk(text, size=800, overlap=100):
-    """Zerlegt langen Text in Stücke von 800 Zeichen.
-    Je 100 Zeichen überlappen, damit kein Satz an der Schnittkante verloren geht."""
+def chunk(text, size=2000, overlap=200):
+    """Zerlegt langen Text in Stücke von 2000 Zeichen.
+    Je 200 Zeichen überlappen, damit kein Satz an der Schnittkante verloren geht."""
     return [text[i:i + size] for i in range(0, len(text), size - overlap)]
 
 
@@ -20,6 +21,7 @@ def ingest():
     Chroma berechnet dabei automatisch die Embeddings (Zahlenreihen, die die Bedeutung abbilden)."""
     for pdf in pathlib.Path("docs").glob("*.pdf"):
         text = "".join(page.extract_text() or "" for page in PdfReader(pdf).pages)
+        text = re.sub(r"[=\-]{5,}", " ", text)
         chunks = chunk(text)
         collection.upsert(
             documents=chunks,                                       # die Textstücke
