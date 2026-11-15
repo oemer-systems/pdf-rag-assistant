@@ -30,16 +30,17 @@ def ingest():
 
 
 def ask(question):
-    """Sucht die 4 Stücke, die der Frage am ähnlichsten sind (Retrieval),
+    """Sucht die bis zu 6 Stücke, die der Frage am ähnlichsten sind (Retrieval),
     und lässt das Modell daraus eine Antwort formulieren (Generation)."""
-    hits = collection.query(query_texts=[question], n_results=4)
+    hits = collection.query(query_texts=[question], n_results=min(6, collection.count()))  # höchstens 6 Treffer
     context = "\n\n".join(
         f"[{meta['source']}] {doc}"
         for doc, meta in zip(hits["documents"][0], hits["metadatas"][0])
     )
-    answer = Anthropic().messages.create(      # nimmt den Key automatisch aus ANTHROPIC_API_KEY
-        model="claude-haiku-5-5",              
-        max_tokens=500,                        
+    print("Quellen:", sorted({meta["source"] for meta in hits["metadatas"][0]}), "\n")
+    answer = Anthropic().messages.create(
+        model="claude-haiku-5-5",
+        max_tokens=1500,
         messages=[{
             "role": "user",
             "content": "Beantworte die Frage nur anhand des Kontexts und nenne die Quelle. "
