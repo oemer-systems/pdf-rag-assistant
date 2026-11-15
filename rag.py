@@ -47,7 +47,9 @@ def ask(question):
                        f"Kontext:\n{context}\n\nFrage: {question}",
         }],
     )
-    print(answer.content[0].text)
+    for block in answer.content:
+        if block.type == "text":
+            print(block.text)
 
 
 # Startpunkt: entscheidet anhand deiner Eingabe, was passiert
